@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruleta de la Suerte</title>
+    <title>Ruleta de la Suerte Realista</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,35 +19,38 @@
             position: relative;
         }
         canvas {
-            border: 5px solid #333;
+            border: 8px solid #333;
             border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
         }
         .marcador {
             position: absolute;
-            top: -20px;
+            top: -25px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid #e74c3c;
+            border-left: 18px solid transparent;
+            border-right: 18px solid transparent;
+            border-top: 35px solid #e74c3c;
             z-index: 10;
         }
         button {
-            margin-top: 20px;
-            padding: 12px 30px;
-            font-size: 18px;
+            margin-top: 25px;
+            padding: 15px 40px;
+            font-size: 20px;
             font-weight: bold;
             color: white;
             background-color: #25d366; /* Verde WhatsApp */
             border: none;
-            border-radius: 25px;
+            border-radius: 30px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s ease;
         }
-        button:hover { background-color: #128c7e; }
+        button:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -57,23 +60,30 @@
         <div class="marcador"></div>
         <canvas id="ruleta" width="400" height="400"></canvas>
     </div>
-    <button onclick="girar()">¡GIRAR CASILLA!</button>
+    <button id="btn-girar" onclick="girar()">¡GIRAR RULETA!</button>
 
     <script>
         const canvas = document.getElementById('ruleta');
         const ctx = canvas.getContext('2d');
+        const btnGirar = document.getElementById('btn-girar');
         const casillas = 20;
         const radio = canvas.width / 2;
+        
         let anguloActual = 0;
+        let velocidad = 0;
+        const friccion = 0.988; // Controla la suavidad del frenado (más cerca de 1 = frena más lento)
+        let enMovimiento = false;
 
-        // Genera 20 colores llamativos automáticamente
+        // Generar 20 colores HSL bonitos y variados
         const colores = [];
         for (let i = 0; i < casillas; i++) {
-            colores.push(`hsl(${(i * 360) / casillas}, 85%, 60%)`);
+            colores.push(`hsl(${(i * 360) / casillas}, 85%, 55%)`);
         }
 
         function dibujarRuleta() {
             const anguloCasilla = (2 * Math.PI) / casillas;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
             for (let i = 0; i < casillas; i++) {
                 ctx.beginPath();
                 ctx.fillStyle = colores[i];
@@ -81,31 +91,61 @@
                 ctx.arc(radio, radio, radio, anguloActual + i * anguloCasilla, anguloActual + (i + 1) * anguloCasilla);
                 ctx.lineTo(radio, radio);
                 ctx.fill();
+                
+                // Líneas divisorias estéticas
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
                 ctx.stroke();
 
-                // Números en las casillas
+                // Dibujar los números centrados en cada porción
                 ctx.save();
                 ctx.translate(radio, radio);
                 ctx.rotate(anguloActual + i * anguloCasilla + anguloCasilla / 2);
-                ctx.fillStyle = "#fff";
+                ctx.fillStyle = "#ffffff";
                 ctx.font = "bold 16px Arial";
-                ctx.fillText(i + 1, radio * 0.7, 5);
+                ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+                ctx.shadowBlur = 4;
+                ctx.fillText(i + 1, radio * 0.65, 6);
                 ctx.restore();
             }
+
+            // Círculo central estético (Eje de la ruleta)
+            ctx.beginPath();
+            ctx.arc(radio, radio, 25, 0, 2 * Math.PI);
+            ctx.fillStyle = '#333333';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
         }
 
         function girar() {
-            let vueltas = Math.random() * 5 + 5; // Entre 5 y 10 vueltas completas
-            let velocidad = 0.5;
+            if (enMovimiento) return; // Evita que se pulse mientras gira
             
+            enMovimiento = true;
+            btnGirar.disabled = true;
+            btnGirar.style.backgroundColor = '#ccc';
+
+            // Velocidad inicial aleatoria alta para el impulso de salida
+            velocidad = Math.random() * 0.3 + 0.4; 
+
             function animacion() {
-                if (vueltas <= 0.01) return;
-                vueltas -= velocidad;
-                velocidad *= 0.98; // Desaceleración suave
                 anguloActual += velocidad;
+                velocidad *= friccion; // Aplica el frenado gradual realista
+
                 dibujarRuleta();
+
+                // Si la velocidad es casi cero, se detiene por completo
+                if (velocidad < 0.001) {
+                    enMovimiento = false;
+                    btnGirar.disabled = false;
+                    btnGirar.style.backgroundColor = '#25d366';
+                    return;
+                }
+
                 requestAnimationFrame(animacion);
             }
+            
             animacion();
         }
 
