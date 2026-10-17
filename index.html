@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta de la Suerte</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+        .contenedor {
+            position: relative;
+        }
+        canvas {
+            border: 5px solid #333;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .marcador {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #e74c3c;
+            z-index: 10;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #25d366; /* Verde WhatsApp */
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover { background-color: #128c7e; }
+    </style>
+</head>
+<body>
+
+    <h1>🎡 Ruleta de 20 Casillas</h1>
+    <div class="contenedor">
+        <div class="marcador"></div>
+        <canvas id="ruleta" width="400" height="400"></canvas>
+    </div>
+    <button onclick="girar()">¡GIRAR CASILLA!</button>
+
+    <script>
+        const canvas = document.getElementById('ruleta');
+        const ctx = canvas.getContext('2d');
+        const casillas = 20;
+        const radio = canvas.width / 2;
+        let anguloActual = 0;
+
+        // Genera 20 colores llamativos automáticamente
+        const colores = [];
+        for (let i = 0; i < casillas; i++) {
+            colores.push(`hsl(${(i * 360) / casillas}, 85%, 60%)`);
+        }
+
+        function dibujarRuleta() {
+            const anguloCasilla = (2 * Math.PI) / casillas;
+            for (let i = 0; i < casillas; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colores[i];
+                ctx.moveTo(radio, radio);
+                ctx.arc(radio, radio, radio, anguloActual + i * anguloCasilla, anguloActual + (i + 1) * anguloCasilla);
+                ctx.lineTo(radio, radio);
+                ctx.fill();
+                ctx.stroke();
+
+                // Números en las casillas
+                ctx.save();
+                ctx.translate(radio, radio);
+                ctx.rotate(anguloActual + i * anguloCasilla + anguloCasilla / 2);
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 16px Arial";
+                ctx.fillText(i + 1, radio * 0.7, 5);
+                ctx.restore();
+            }
+        }
+
+        function girar() {
+            let vueltas = Math.random() * 5 + 5; // Entre 5 y 10 vueltas completas
+            let velocidad = 0.5;
+            
+            function animacion() {
+                if (vueltas <= 0.01) return;
+                vueltas -= velocidad;
+                velocidad *= 0.98; // Desaceleración suave
+                anguloActual += velocidad;
+                dibujarRuleta();
+                requestAnimationFrame(animacion);
+            }
+            animacion();
+        }
+
+        dibujarRuleta();
+    </script>
+</body>
+</html>
